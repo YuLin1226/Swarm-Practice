@@ -1,9 +1,8 @@
-function dq = MobileRobotDynamics(t, q)
+function dq = MobileRobotDynamics(t, q, circle)
 M = 1;
 B = 1;
 kd = 9;
 ksk = 1;
-circle = [5, 5, 3];
 
 qt = [circle(1), circle(2)];
 R = circle(3);
