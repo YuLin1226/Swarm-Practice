@@ -1,0 +1,17 @@
+%% Parameters
+time_interval = [0 50];         % 計算時間
+ICs = [2,0,5,0]';                   % 4個初始條件: x, dx, y, dy
+
+%% ODE45
+[t,y] = ode45(@MobileRobotDynamics, time_interval, ICs);
+
+
+%% Result Plotting
+figure;
+PlotCircle(1, 2,)
+axis([1.5, 2.5, 4.5, 5.5]);
+grid on; hold on;
+for i = 1 : length(y)
+plot(y(i,1), y(i,3), 'b.');
+pause(0.01);
+end
