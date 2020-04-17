@@ -2,12 +2,15 @@ clear;
 clc;
 
 %% Parameters
+
+
 time_interval = linspace(0,4000,11);              % 計算時間
 IC_1 = [-3, 0, 3, 0]';                  % 4個初始條件: x, dx, y, dy
 IC_2 = [1, 0, 1, 0]';                   % 4個初始條件: x, dx, y, dy
 IC_3 = [5, 0, 2, 0]';                   % 4個初始條件: x, dx, y, dy
 IC_4 = [5, 0, 5, 0]';                   % 4個初始條件: x, dx, y, dy
 
+State_vs = [];
 State_1 = [];                           % 存state 資料
 State_2 = [];                           % 存state 資料
 State_3 = [];                           % 存state 資料
@@ -15,11 +18,14 @@ State_4 = [];                           % 存state 資料
 %% ODE45
 for i = 1 : length(time_interval)-1
     time = [time_interval(i) , time_interval(i+1)];
-
-    [t,Robot_1] = ode45(@RobotDynamics, time, IC_1, [], [IC_2(1), IC_3(1), IC_4(1)], [IC_2(3), IC_3(3), IC_4(3)]);
-    [t,Robot_2] = ode45(@RobotDynamics, time, IC_2, [], [IC_1(1), IC_3(1), IC_4(1)], [IC_1(3), IC_3(3), IC_4(3)]);
-    [t,Robot_3] = ode45(@RobotDynamics, time, IC_3, [], [IC_1(1), IC_2(1), IC_4(1)], [IC_1(3), IC_2(3), IC_4(3)]);
-    [t,Robot_4] = ode45(@RobotDynamics, time, IC_4, [], [IC_1(1), IC_2(1), IC_3(1)], [IC_1(3), IC_2(3), IC_3(3)]); 
+    vs = [  0 + time(1)/400;                 % Virtual Circle
+            0 + sin(time(1)/400);
+            3];              
+    State_vs = [State_vs,vs];
+    [t,Robot_1] = ode45(@RobotDynamics, time, IC_1, [], [IC_2(1), IC_3(1), IC_4(1)], [IC_2(3), IC_3(3), IC_4(3)], vs);
+    [t,Robot_2] = ode45(@RobotDynamics, time, IC_2, [], [IC_1(1), IC_3(1), IC_4(1)], [IC_1(3), IC_3(3), IC_4(3)], vs);
+    [t,Robot_3] = ode45(@RobotDynamics, time, IC_3, [], [IC_1(1), IC_2(1), IC_4(1)], [IC_1(3), IC_2(3), IC_4(3)], vs);
+    [t,Robot_4] = ode45(@RobotDynamics, time, IC_4, [], [IC_1(1), IC_2(1), IC_3(1)], [IC_1(3), IC_2(3), IC_3(3)], vs); 
     
     State_1 = [State_1 ; Robot_1];
     State_2 = [State_2 ; Robot_2];
@@ -33,33 +39,17 @@ for i = 1 : length(time_interval)-1
     
 end
 %% Result Plotting
-PlotCircle(0, 0, 3);
-axis([-6, 6, -6, 6]);
-grid on; hold on;
-
-
-pos = [ State_2(end,1), State_2(end,3);
-        State_4(end,1), State_4(end,3);
-        State_1(end,1), State_1(end,3);
-        State_3(end,1), State_3(end,3)];
-   
-plot( [pos(4,1),pos(1,1)] , [pos(4,2),pos(1,2)] , 'k--' );    
-for i = 1:3
-    plot( [pos(i,1),pos(i+1,1)] , [pos(i,2),pos(i+1,2)] , 'k--' );
+% -------------Virtual Circle Plot-------------
+for j = 1:length(State_vs)
+    PlotCircle(State_vs(1,j), State_vs(2,j), State_vs(3,j));
+    axis([-10, 20, -10, 20]);
+    grid on; hold on;
 end
+% -------------Virtual Circle Plot-------------
 
-% n = 1;
-% k = 0.5;
-% for i = fix(length(State_1)*k) : length(State_1)
-%     plot(State_1(n*i,1), State_1(n*i,3), 'b.');
-%     plot(State_2(n*i,1), State_2(n*i,3), 'r.');
-%     plot(State_3(n*i,1), State_3(n*i,3), 'g.');
-%     plot(State_4(n*i,1), State_4(n*i,3), 'm.');
-%     pause(0.01);
-% end
 
-n = fix(length(State_2(:,1))/200);
-
+% -------------Robots Plot-------------
+n = fix(length(State_4(:,1))/200);
 for i = 1:200
     r1=plot(State_1(n*i,1), State_1(n*i,3), 'bo');
     r2=plot(State_2(n*i,1), State_2(n*i,3), 'ro');
@@ -73,9 +63,10 @@ for i = 1:200
         delete(r4);
     end
 end
+% -------------Robots Plot-------------
 
+function dq = RobotDynamics(t, q, x, y, vs)
 
-function dq = RobotDynamics(t, q, x, y)
 % ----------系統方程式參數設定----------
 M = 1;
 B = 1;
@@ -83,9 +74,11 @@ kd = 9;
 kr = 0.15;
 Q = 10;
 ksk = 1;
-qt = [0, 0];    % Virtual circle
-R = 3;
 % ----------系統方程式參數設定----------
+
+qt = [vs(1), vs(2)];    % Virtual circle
+R = vs(3);
+
 
 r = ( (q(1)- x).^2 + (q(3) - y).^2).^0.5;         % Other Robots
 cosine = ( q(1) - x ) ./ r;
